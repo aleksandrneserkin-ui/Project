@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента — project 2026</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div class="logo">~ place</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Главная</a></li>
+                <li><a href="feed.html" class="active">Лента</a></li>
+                <li><a href="placeholder.html">Профиль</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="feed-main">
+        <section class="feed-header">
+            <h1 class="feed-title">Лента</h1>
+            <p class="feed-subtitle">Свежие материалы сообщества</p>
+        </section>
+
+        <section class="feed-grid" id="feedGrid">
+            <!-- Карточки добавляются скриптом -->
+        </section>
+
+        <div class="feed-sentinel" id="feedSentinel" aria-hidden="true"></div>
+
+        <div class="feed-loader" id="feedLoader" hidden>
+            <span class="feed-loader-dot"></span>
+            <span class="feed-loader-dot"></span>
+            <span class="feed-loader-dot"></span>
+        </div>
+    </main>
+
+    <footer>
+        project 2026
+    </footer>
+
+    <script src="feed.js"></script>
+</body>
+</html>

@@ -546,3 +546,186 @@ footer {
         font-size: 1.6rem;
     }
 }
+/* ==================== Лента ==================== */
+.feed-main {
+    flex: 1;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 48px 60px;
+}
+
+.feed-header {
+    margin-bottom: 28px;
+}
+
+.feed-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #3f5468;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+}
+
+.feed-subtitle {
+    font-size: 0.95rem;
+    color: #7a8d9e;
+}
+
+/* Сетка: 4 колонки */
+.feed-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+/* Карточка-прямоугольник */
+.feed-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 180px;
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(180, 195, 210, 0.45);
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(120, 140, 160, 0.1);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    animation: cardIn 0.35s ease both;
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.feed-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(120, 140, 160, 0.18);
+    border-color: rgba(150, 170, 190, 0.65);
+}
+
+.feed-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.feed-card-index {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #8aa5bd;
+}
+
+.feed-card-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a8c0d4, #7f9bb5);
+    box-shadow: 0 0 0 3px rgba(160, 185, 205, 0.18);
+}
+
+.feed-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 14px 0;
+}
+
+.feed-card-line {
+    height: 10px;
+    border-radius: 6px;
+    background: linear-gradient(
+        90deg,
+        rgba(200, 215, 228, 0.75) 0%,
+        rgba(220, 230, 240, 0.6) 100%
+    );
+}
+
+.feed-card-line.short {
+    width: 60%;
+}
+
+.feed-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.feed-card-tag {
+    font-size: 0.72rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: #7a8d9e;
+    background: rgba(220, 230, 240, 0.55);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+/* Sentinel — невидимый маркер для IntersectionObserver */
+.feed-sentinel {
+    height: 1px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Индикатор "загрузки" */
+.feed-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 0 8px;
+}
+
+.feed-loader-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #8aa5bd;
+    animation: loaderPulse 1s ease-in-out infinite;
+}
+
+.feed-loader-dot:nth-child(2) { animation-delay: 0.15s; }
+.feed-loader-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes loaderPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+/* Адаптив ленты */
+@media (max-width: 900px) {
+    .feed-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .feed-main {
+        padding: 24px 20px 40px;
+    }
+
+    .feed-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .feed-title {
+        font-size: 1.3rem;
+    }
+
+    .feed-card {
+        min-height: 150px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    .feed-grid {
+        grid-template-columns: 1fr;
+    }
+}
