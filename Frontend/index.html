@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div class="logo">Logo</div>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Главная</a></li>
+                <li><a href="#">Лента</a></li>
+                <li><a href="#">Профиль</a></li>
+            </ul>
+
+            <button type="button" class="auth-btn" id="openAuth">Войти</button>
+
+            <div class="user-badge" id="userBadge" hidden>
+                <span class="user-name" id="userName"></span>
+                <button type="button" class="logout-btn" id="logoutBtn">Выйти</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="panel requires-auth">
+            <h2 class="panel-title">Актуально для вас</h2>
+            <div class="panel-body">
+                <!-- Содержимое раздела -->
+            </div>
+        </section>
+
+        <section class="panel requires-auth">
+            <h2 class="panel-title">Последние ваши схемы</h2>
+            <div class="panel-body">
+                <!-- Содержимое раздела -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        project 2026
+    </footer>
+
+    <!-- Всплывающее окно авторизации -->
+    <div class="modal-overlay" id="authModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <button type="button" class="modal-close" id="closeAuth" aria-label="Закрыть">&times;</button>
+
+            <h2 class="modal-title" id="authTitle">Добро пожаловать</h2>
+
+            <div class="modal-tabs">
+                <button type="button" class="tab-btn active" data-tab="login">Вход</button>
+                <button type="button" class="tab-btn" data-tab="register">Регистрация</button>
+            </div>
+
+            <!-- Форма входа -->
+            <form class="modal-form active" id="formLogin" novalidate>
+                <label class="field">
+                    <span>Email</span>
+                    <input type="email" name="email" placeholder="you@example.com" required>
+                </label>
+                <label class="field">
+                    <span>Пароль</span>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </label>
+                <p class="form-error" id="loginError" hidden></p>
+                <button type="submit" class="submit-btn">Войти</button>
+            </form>
+
+            <!-- Форма регистрации -->
+            <form class="modal-form" id="formRegister" novalidate>
+                <label class="field">
+                    <span>Имя</span>
+                    <input type="text" name="name" placeholder="Как вас зовут" required>
+                </label>
+                <label class="field">
+                    <span>Email</span>
+                    <input type="email" name="email" placeholder="you@example.com" required>
+                </label>
+                <label class="field">
+                    <span>Пароль</span>
+                    <input type="password" name="password" placeholder="Минимум 6 символов" minlength="6" required>
+                </label>
+                <p class="form-error" id="registerError" hidden></p>
+                <button type="submit" class="submit-btn">Создать аккаунт</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Тестовые данные (загружаются в localStorage) -->
+    <script src="test-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
