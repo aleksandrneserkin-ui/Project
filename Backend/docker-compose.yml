@@ -1,0 +1,32 @@
+version: "3.9"
+
+networks:
+  web:
+    driver: bridge
+
+services:
+  # --- Заготовка под будущий API/бэкенд ---
+  # Пока не используется статикой, оставлен «на вырост».
+  # app:
+  #   build: ./server
+  #   container_name: app_server
+  #   restart: unless-stopped
+  #   expose:
+  #     - "3000"
+  #   networks:
+  #     - web
+
+  # --- Nginx: раздаёт статику и слушает порты сайта ---
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"       # HTTP
+      - "443:443"     # HTTPS (задел на будущее)
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./site:/usr/share/nginx/html:ro   # ← вся статика монтируется сюда
+      # - ./nginx/certs:/etc/nginx/certs:ro  # раскомментируй, когда будут SSL-сертификаты
+    networks:
+      - web
