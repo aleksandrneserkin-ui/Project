@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="theme.js"></script>
 </head>
 <body>
 
@@ -14,7 +15,7 @@
             <ul class="nav-links">
                 <li><a href="#" class="active">Главная</a></li>
                 <li><a href="feed.html">Лента</a></li>
-                <li><a href="placeholder.html">Профиль</a></li>
+                <li><a href="profile.html">Профиль</a></li>
             </ul>
 
             <label class="theme-switch" title="Переключить тему">
@@ -66,7 +67,25 @@
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
             <button type="button" class="modal-close" id="closeAuth" aria-label="Закрыть">&times;</button>
 
-            <h2 class="modal-title" id="authTitle">Добро пожаловать</h2>
+            <h2 class="modal-title" id="authTitle">
+                Добро пожаловать
+
+                <!-- TEST-ONLY-START: подсказка с тестовыми данными для входа. Удалить вместе с CSS-блоком TEST-ONLY в styles.css -->
+                <span class="test-only test-hint" data-test="hint">
+                    <span class="test-hint-icon" tabindex="0" role="button" aria-label="Тестовые данные для входа">?</span>
+                    <span class="test-hint-text" role="tooltip">
+                        <strong>Тестовый режим.</strong>
+                        Для входа можно использовать:
+                        <br>test@example.com&nbsp;/&nbsp;test123
+                        <br>demo@example.com&nbsp;/&nbsp;demo123
+                        <br><em>Или создайте свою запись — она тоже будет работать.</em>
+                        <span class="test-hint-note">
+                            Это временный элемент для тестирования. Он будет удалён.
+                        </span>
+                    </span>
+                </span>
+                <!-- TEST-ONLY-END -->
+            </h2>
 
             <div class="modal-tabs">
                 <button type="button" class="tab-btn active" data-tab="login">Вход</button>
@@ -110,5 +129,6 @@
     <!-- Тестовые данные (загружаются в localStorage) -->
     <script src="test-data.js"></script>
     <script src="script.js"></script>
+    
 </body>
 </html>
