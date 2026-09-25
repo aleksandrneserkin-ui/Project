@@ -1,17 +1,7 @@
 /* ============================================================
-   БЛОК 1. ГОСТЕВОЙ РЕЖИМ + СЕССИЯ + ВЫХОД
-   ------------------------------------------------------------
-   Отвечает за:
-     - форму входа / регистрации прямо на странице профиля
-     - переключение между этими формами (кнопка внизу)
-     - запись и удаление сессии в localStorage
-     - класс body.authenticated (по нему CSS скрывает гостевой блок)
-     - генерацию события 'auth:change' для Блока 2 и других скриптов
+   БЛОК 1. ГОСТЕВОЙ РЕЖИМ + СЕССИЯ + ВЫХОД (через API)
    ============================================================ */
 (function () {
-    const USERS_KEY = 'app_users';
-    const SESSION_KEY = 'app_current_user';
-
     const authTitle     = document.getElementById('profileAuthTitle');
     const authSubtitle  = document.getElementById('profileAuthSubtitle');
     const loginForm     = document.getElementById('profileLoginForm');
@@ -22,40 +12,16 @@
     const switchBtn     = document.getElementById('profileSwitchBtn');
     const logoutBtn     = document.getElementById('profileLogoutBtn');
 
-    function getUsers() {
-        try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
-        catch (e) { return []; }
-    }
-
-    function saveUsers(users) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    }
-
-    function showError(el, msg) {
-        if (!el) return;
-        el.textContent = msg;
-        el.hidden = false;
-    }
-
-    function hideError(el) {
-        if (!el) return;
-        el.textContent = '';
-        el.hidden = true;
-    }
+    function showError(el, msg) { if (!el) return; el.textContent = msg; el.hidden = false; }
+    function hideError(el) { if (!el) return; el.textContent = ''; el.hidden = true; }
 
     function emitAuthChange(user) {
-        document.dispatchEvent(new CustomEvent('auth:change', {
-            detail: { user: user }
-        }));
+        document.dispatchEvent(new CustomEvent('auth:change', { detail: { user } }));
     }
-
     function persistSession(user) {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(user));
         document.body.classList.add('authenticated');
         emitAuthChange(user);
     }
-
-    /* ----- Переключение вход / регистрация ----- */
 
     function showLoginMode() {
         if (loginForm)    loginForm.hidden = false;
@@ -67,7 +33,6 @@
         hideError(loginError);
         hideError(registerError);
     }
-
     function showRegisterMode() {
         if (loginForm)    loginForm.hidden = true;
         if (registerForm) registerForm.hidden = false;
@@ -79,139 +44,84 @@
         hideError(registerError);
     }
 
-    if (switchBtn) {
-        switchBtn.addEventListener('click', function () {
-            if (registerForm && registerForm.hidden) showRegisterMode();
-            else showLoginMode();
-        });
-    }
+    switchBtn?.addEventListener('click', () => {
+        if (registerForm && registerForm.hidden) showRegisterMode();
+        else showLoginMode();
+    });
 
-    /* ----- Вход через форму на странице ----- */
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            hideError(loginError);
-
-            const email    = loginForm.email.value.trim().toLowerCase();
-            const password = loginForm.password.value;
-
-            if (!email || !password) {
-                showError(loginError, 'Заполните все поля');
-                return;
-            }
-
-            const user = getUsers().find(function (u) {
-                return u.email.toLowerCase() === email && u.password === password;
-            });
-
-            if (!user) {
-                showError(loginError, 'Неверный email или пароль');
-                return;
-            }
-
+    loginForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError(loginError);
+        const email    = loginForm.email.value.trim().toLowerCase();
+        const password = loginForm.password.value;
+        if (!email || !password) return showError(loginError, 'Заполните все поля');
+        try {
+            const { user } = await window.API.login({ email, password });
             loginForm.reset();
             persistSession(user);
-        });
-    }
+        } catch (err) {
+            showError(loginError, err.message);
+        }
+    });
 
-    /* ----- Регистрация через форму на странице ----- */
-
-    if (registerForm) {
-        registerForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            hideError(registerError);
-
-            const name     = registerForm.name.value.trim();
-            const email    = registerForm.email.value.trim().toLowerCase();
-            const password = registerForm.password.value;
-
-            if (!name || !email || !password) {
-                showError(registerError, 'Заполните все поля');
-                return;
-            }
-            if (password.length < 6) {
-                showError(registerError, 'Пароль должен быть не короче 6 символов');
-                return;
-            }
-
-            const users = getUsers();
-            if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
-                showError(registerError, 'Пользователь с таким email уже существует');
-                return;
-            }
-
-            const newUser = { email: email, password: password, name: name };
-            users.push(newUser);
-            saveUsers(users);
-
+    registerForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError(registerError);
+        const name     = registerForm.name.value.trim();
+        const email    = registerForm.email.value.trim().toLowerCase();
+        const password = registerForm.password.value;
+        if (!name || !email || !password) return showError(registerError, 'Заполните все поля');
+        if (password.length < 6) return showError(registerError, 'Пароль должен быть не короче 6 символов');
+        try {
+            const { user } = await window.API.register({ name, email, password });
             registerForm.reset();
-            persistSession(newUser);
-        });
-    }
+            persistSession(user);
+        } catch (err) {
+            showError(registerError, err.message);
+        }
+    });
 
-    /* ----- Выход (локальная кнопка) ----- */
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function () {
-            localStorage.removeItem(SESSION_KEY);
-            document.body.classList.remove('authenticated');
-            showLoginMode();
-            emitAuthChange(null);
-        });
-    }
-
-    /* ----- Стартовое состояние ----- */
-
-    let initialUser = null;
-    try {
-        const raw = localStorage.getItem(SESSION_KEY);
-        initialUser = raw ? JSON.parse(raw) : null;
-    } catch (e) { /* ignore */ }
-
-    if (initialUser && initialUser.email) {
-        document.body.classList.add('authenticated');
-    } else {
+    logoutBtn?.addEventListener('click', async () => {
+        try { await window.API.logout(); } catch (_) {}
+        document.body.classList.remove('authenticated');
         showLoginMode();
-    }
+        emitAuthChange(null);
+    });
+
+    // Стартовое состояние — проверяем сессию на сервере
+    (async function init() {
+        try {
+            const { user } = await window.API.me();
+            if (user) {
+                document.body.classList.add('authenticated');
+                // Блок 2 сам отрисует по событию
+                emitAuthChange(user);
+                return;
+            }
+        } catch (_) { /* гость */ }
+        showLoginMode();
+    })();
 })();
 
 
 /* ============================================================
-   БЛОК 2. РЕНДЕР ПРОФИЛЯ
-   ------------------------------------------------------------
-   Отвечает за:
-     - заполнение шапки (имя, бейдж, кнопки "Войти"/"Выйти")
-     - заполнение карточки профиля (аватар, заголовок, email)
-     - заполнение инлайн-полей (.profile-info-value)
-   Слушает событие 'auth:change'.
+   БЛОК 2. РЕНДЕР ПРОФИЛЯ (без изменений по логике)
    ============================================================ */
 (function () {
-    const SESSION_KEY = 'app_current_user';
-
-    const openAuthBtn = document.getElementById('openAuth');
-    const userBadge   = document.getElementById('userBadge');
+    const openAuthBtn  = document.getElementById('openAuth');
+    const userBadge    = document.getElementById('userBadge');
     const userNameSpan = document.getElementById('userName');
 
-    const avatarEl   = document.getElementById('profileAvatar');
-    const nameEl     = document.getElementById('profileName');
-    const emailEl    = document.getElementById('profileEmail');
-
-    function readSession() {
-        try {
-            const raw = localStorage.getItem(SESSION_KEY);
-            return raw ? JSON.parse(raw) : null;
-        } catch (e) { return null; }
-    }
+    const avatarEl = document.getElementById('profileAvatar');
+    const nameEl   = document.getElementById('profileName');
+    const emailEl  = document.getElementById('profileEmail');
 
     function initials(name) {
         if (!name) return '?';
         const parts = String(name).trim().split(/\s+/).slice(0, 2);
-        const out = parts.map(function (p) { return p.charAt(0); }).join('');
+        const out = parts.map((p) => p.charAt(0)).join('');
         return out ? out.toUpperCase() : '?';
     }
-
-    /* ----- Шапка ----- */
 
     function syncHeader(user) {
         if (user) {
@@ -225,13 +135,10 @@
         }
     }
 
-    /* ----- Инлайн-поля (используются Блоком 3 для рендера) ----- */
-
     function renderField(field, value) {
         const p = document.querySelector('.profile-info-value[data-field="' + field + '"]');
         if (!p) return;
         if (p.dataset.editing === '1') return;
-
         if (value) {
             p.textContent = value;
             p.classList.remove('is-empty');
@@ -241,108 +148,40 @@
         }
     }
 
-    /* ----- Карточка профиля ----- */
-
     function renderProfile(user) {
-        if (user) {
-            if (avatarEl) avatarEl.textContent = initials(user.name || user.email);
-            if (nameEl)   nameEl.textContent   = user.name || 'Пользователь';
-            if (emailEl)  emailEl.textContent  = user.email || '';
+        if (!user) return;
+        if (avatarEl) avatarEl.textContent = initials(user.name || user.email);
+        if (nameEl)   nameEl.textContent   = user.name || 'Пользователь';
+        if (emailEl)  emailEl.textContent  = user.email || '';
 
-            renderField('name',  user.name  || '');
-            renderField('about', user.about || '');
-            renderField('city',  user.city  || '');
-            renderField('job',   user.job   || '');
-        }
+        renderField('name',  user.name  || '');
+        renderField('about', user.about || '');
+        renderField('city',  user.city  || '');
+        renderField('job',   user.job   || '');
     }
 
-    document.addEventListener('auth:change', function (e) {
+    document.addEventListener('auth:change', (e) => {
         const user = e.detail ? e.detail.user : null;
         syncHeader(user);
         renderProfile(user);
     });
-
-    /* ----- Стартовое состояние ----- */
-
-    const session = readSession();
-    if (session && session.email) {
-        syncHeader(session);
-        renderProfile(session);
-    } else {
-        syncHeader(null);
-    }
 })();
 
 
 /* ============================================================
-   БЛОК 3. ИНЛАЙН-РЕДАКТИРОВАНИЕ ПОЛЕЙ ПРОФИЛЯ
-   ------------------------------------------------------------
-   Отвечает за:
-     - dblclick по .profile-info-value.editable
-     - замену <p> на <input>/<textarea> с текущим текстом
-     - сохранение по Enter (input) / Enter или Shift+Enter (textarea)
-       и по blur (клик вне поля)
-     - отмену по Esc
-     - запись в localStorage (app_current_user + app_users)
-     - генерацию 'auth:change', чтобы Блок 2 обновил шапку и заголовок
-
-   Поля:
-     name, about, city, job — редактируемые
-     (about — textarea, остальные — input)
+   БЛОК 3. ИНЛАЙН-РЕДАКТИРОВАНИЕ (сохранение — через API)
    ============================================================ */
 (function () {
-    const SESSION_KEY = 'app_current_user';
-    const USERS_KEY   = 'app_users';
-
-    // Правила для каждого поля. Легко добавить/убрать.
     const FIELD_RULES = {
         name:  { multiline: false },
         about: { multiline: true  },
         city:  { multiline: false },
-        job:   { multiline: false }
+        job:   { multiline: false },
     };
-
-    /* ----- Работа с хранилищем ----- */
-
-    function readSession() {
-        try {
-            const raw = localStorage.getItem(SESSION_KEY);
-            return raw ? JSON.parse(raw) : null;
-        } catch (e) { return null; }
-    }
-
-    function persistField(field, value) {
-        const session = readSession();
-        if (!session || !session.email) return;
-
-        // 1. сессия
-        session[field] = value;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-
-        // 2. запись пользователя в app_users
-        try {
-            const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-            const idx = users.findIndex(function (u) {
-                return u.email.toLowerCase() === session.email.toLowerCase();
-            });
-            if (idx !== -1) {
-                users[idx][field] = value;
-                localStorage.setItem(USERS_KEY, JSON.stringify(users));
-            }
-        } catch (e) { /* ignore */ }
-
-        // 3. оповещаем Блок 2 (перерендерит шапку, заголовок, аватар)
-        document.dispatchEvent(new CustomEvent('auth:change', {
-            detail: { user: session }
-        }));
-    }
-
-    /* ----- Рендер одного поля ----- */
 
     function renderField(field, value) {
         const p = document.querySelector('.profile-info-value[data-field="' + field + '"]');
         if (!p) return;
-
         if (value) {
             p.textContent = value;
             p.classList.remove('is-empty');
@@ -352,7 +191,16 @@
         }
     }
 
-    /* ----- Редактирование одного поля ----- */
+    async function persistField(field, value) {
+        try {
+            const { user } = await window.API.updateMe({ [field]: value });
+            document.dispatchEvent(new CustomEvent('auth:change', { detail: { user } }));
+        } catch (err) {
+            // Откат к предыдущему значению, если сервер не принял
+            console.warn('[profile] не удалось сохранить:', err.message);
+            throw err;
+        }
+    }
 
     function startEdit(p) {
         if (p.dataset.editing === '1') return;
@@ -375,7 +223,6 @@
 
         p.textContent = '';
         p.appendChild(editor);
-
         editor.focus();
         if (typeof editor.setSelectionRange === 'function') {
             const len = editor.value.length;
@@ -384,7 +231,7 @@
 
         let finished = false;
 
-        function finish(save) {
+        async function finish(save) {
             if (finished) return;
             finished = true;
 
@@ -395,35 +242,30 @@
             renderField(field, final);
 
             if (save && final !== current) {
-                persistField(field, final);
+                try {
+                    await persistField(field, final);
+                } catch (_) {
+                    // Не удалось — вернём прежнее значение
+                    renderField(field, current);
+                }
             }
         }
 
-        editor.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                finish(false);
-                return;
-            }
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { e.preventDefault(); finish(false); return; }
             if (e.key === 'Enter') {
-                // textarea: Shift+Enter — перенос строки, Enter — сохранить
                 if (rule.multiline && e.shiftKey) return;
                 e.preventDefault();
                 finish(true);
             }
         });
-
-        editor.addEventListener('blur', function () {
-            finish(true);
-        });
+        editor.addEventListener('blur', () => finish(true));
     }
 
-    /* ----- Делегирование dblclick ----- */
-
-    document.addEventListener('dblclick', function (e) {
+    document.addEventListener('dblclick', (e) => {
         const p = e.target.closest('.profile-info-value.editable');
         if (!p) return;
-        if (e.target !== p) return; // клик по встроенному редактору — не начинаем заново
+        if (e.target !== p) return;
         startEdit(p);
     });
 })();

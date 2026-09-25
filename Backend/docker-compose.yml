@@ -4,29 +4,66 @@ networks:
   web:
     driver: bridge
 
-services:
-  # --- Заготовка под будущий API/бэкенд ---
-  # Пока не используется статикой, оставлен «на вырост».
-  # app:
-  #   build: ./server
-  #   container_name: app_server
-  #   restart: unless-stopped
-  #   expose:
-  #     - "3000"
-  #   networks:
-  #     - web
+volumes:
+  pg_data:
 
-  # --- Nginx: раздаёт статику и слушает порты сайта ---
+services:
+  # ---------- PostgreSQL ----------
+  db:
+    image: postgres:16-alpine
+    container_name: pg_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_secret_change_me
+      POSTGRES_DB: appdb
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - web
+    # наружу порт НЕ публикуем — только внутри сети
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ---------- API-прослойка ----------
+  api:
+    build: ./api
+    container_name: app_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: app
+      PGPASSWORD: app_secret_change_me
+      PGDATABASE: appdb
+      # ⚠️ в проде замени на длинную случайную строку (>= 64 символа)
+      JWT_SECRET: "change-me-to-a-long-random-string-please-0123456789"
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "3000"
+    networks:
+      - web
+
+  # ---------- Nginx ----------
   nginx:
     image: nginx:alpine
     container_name: nginx_proxy
     restart: unless-stopped
     ports:
-      - "80:80"       # HTTP
-      - "443:443"     # HTTPS (задел на будущее)
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./site:/usr/share/nginx/html:ro   # ← вся статика монтируется сюда
-      # - ./nginx/certs:/etc/nginx/certs:ro  # раскомментируй, когда будут SSL-сертификаты
+      - ./site:/usr/share/nginx/html:ro
+    depends_on:
+      - api
     networks:
       - web
