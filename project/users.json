@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "email": "user@example.com",
+      "password": "scrypt:32768:8:1$R7EbpFr0Rb3CXeY5$3477ae9c69e1a27dbfca3cb71fd16dc928e0c4a193beecce52f99d78a2c08edd19aa892802a5c0433c3252d6dfc285481e89740755864c7c6d08486ed2f5ac9d",
+      "name": "Пользователь",
+      "role": "user",
+      "about": "123",
+      "city": "",
+      "job": ""
+    },
+    {
+      "email": "admin@example.com",
+      "password": "scrypt:32768:8:1$fZdraZpKdqUStolF$8e6cd04694d9e16f0854e817f2dff9cad948945dbb8dcf19c270136b3c66a7afa21422e7af5561ea2cc49ce14d6091b98e25939fc83c021b19af7b74cc6289f8",
+      "name": "Администратор",
+      "role": "admin",
+      "about": "",
+      "city": "",
+      "job": ""
+    }
+  ]
+}
